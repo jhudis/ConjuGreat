@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head> 
+    <title>ConjuGreat</title> 
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAABgZggA
+    vMWNAFlyAABVdAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiI
+    REiAhESIiIURBIhREEiIkQiQiRCJCIiRCIiJEJEIiJEIiIkQiIiIkQiEiRCISIjRBFCJEEUIiIkRCIiREIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIi
+    IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" rel="icon" type="image/x-icon" />
+    <style>
+		table {
+		    border-collapse: collapse;
+		    width: 100%;
+		}
+		th {
+			white-space: pre;
+		}
+		td, th {
+		    border: 1px solid;
+		}
+		td > input {
+			border: 0px;
+			width: 49%;
+			display: inline;
+		}
+		input.unknown {
+			background-color: white;
+		}
+		input.correct {
+			background-color: #ccffcc;
+		}
+		input.incorrect {
+			background-color: #ff5252
+		}
+	</style>
+</head>
+<body>
+   	<form action="/" method="POST">
+    	<select name="pos">
+    		<th:block th:each="pos : ${session.poses}">
+    			<option th:text="${pos}"></option>
+    		</th:block>
+    	</select>
+    	<input type="text" name="query" placeholder="Enter word" />
+    	<button type="submit" value="search" name="search">Search</button>
+    </form>
+    <br></br>
+    <form th:if="${session.showTable}" action="/" method="POST" th:object="${wrapper}" th:with="corners=${session.word.corners}">
+		<th:block th:each="setting : ${session.settings}">
+			<input type="checkbox" name="checkedSettings" th:checked="${setting.prechecked}" th:value="${setting.id}" th:text="${setting.text}" />
+		</th:block>
+    	<p th:text="${session.word.toString()}"></p>
+    	<table style="border:1px solid">
+    		<th:block th:each="corner,cornerStat : ${corners}"
+    				  th:attr="data-act=${session.row.reset()}, data-act1=${session.col.reset()}">
+    			<tr>
+    				<th th:text="${corner.value}" th:colspan="${corners[0].lefts.length}"
+    					th:rowspan="${corner.lefts.length &gt; 0} ? ${corner.tops.length} :
+    								(${corner.sameChildren} ? ${corner.tops.length + 1} : 3)"></th>
+    				<th:block th:each="top,topStat : ${corner.tops[0]}">
+    					<th th:text="${top}"
+    						th:colspan="${corner.sameChildren} ? (${corner.tops.length &gt; 1} ? ${corner.tops[1].length} : 1) :
+    									${corner.tops[__${topStat.count}__].length}"></th>
+    				</th:block>
+    			</tr>
+    			<tr th:unless="${corner.tops.length &lt; 2}">
+    				<th:block th:each="top,topStat : ${corner.tops[0]}">
+    					<th:block th:each="top1 : (${corner.sameChildren} ? ${corner.tops[1]} :
+    									   ${corner.tops[__${topStat.count}__]})">
+    						<th th:text="${top1}"></th>
+    					</th:block>
+    				</th:block>
+    			</tr>
+    			<th:block th:each="left,leftStat : (${corner.lefts.length &gt; 0} ? ${corner.lefts[0]} : ${session.oneElement})">
+    				<tr th:each="left1,left1Stat : (${corner.lefts.length &gt; 1} ? ${corner.lefts[1]} : ${session.oneElement})"
+    					th:attr="data-act=${session.row.increment()}, data-act1=${session.col.reset()}">
+    					<th th:text="${left}" th:if="${corner.lefts.length &gt; 0} and ${left1Stat.first}"
+    						th:rowspan="${corner.lefts.length &gt; 1} ? ${corner.lefts[1].length} : 1"
+    						th:colspan="${corner.lefts.length &gt; 1} ? 1 : ${corners[0].lefts.length}"></th>
+    					<th th:text="${left1}" th:if="${corner.lefts.length &gt; 1}"></th>
+    					<th:block th:each="top,topStat : ${corner.tops[0]}">
+    						<td th:each="top1,top1Stat : (${corner.sameChildren} ? (${corner.tops.length &gt; 1} ?
+    									 ${corner.tops[1]} : ${session.oneElement}) : ${corner.tops[__${topStat.count}__]})"
+    							th:attr="data-act=${session.col.increment()}">
+    							<input type="text"
+    								   th:field="*{input[__${cornerStat.index}__][__${session.row.get()}__]
+    								   					[__${session.col.get()}__].actual}"
+    								   th:class="${session.showCorrect} ? *{input[__${cornerStat.index}__]
+    								   			[__${session.row.get()}__][__${session.col.get()}__].correct} : unknown"
+    								   placeholder="word"
+    							/>|<input
+    								   type="text"
+    								   th:field="*{input[__${cornerStat.index}__][__${session.row.get()}__]
+    								   					[__${session.col.get()}__].actualTranslations}"
+    								   th:class="${session.showCorrect} ? *{input[__${cornerStat.index}__]
+    								   	   [__${session.row.get()}__][__${session.col.get()}__].correctTranslation} : unknown"
+    								   placeholder="translation" />
+    						</td>
+    					</th:block>
+    				</tr>
+    			</th:block>
+    		</th:block>
+    	</table>
+    	<button type="submit" value="grade" name="grade">Grade</button>
+    </form>
+</body>
+</html>
